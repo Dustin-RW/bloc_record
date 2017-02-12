@@ -11,6 +11,7 @@ module Selection
       SQL
 
       rows_to_array(row)
+    end
   end
 
   def find_one(id)
