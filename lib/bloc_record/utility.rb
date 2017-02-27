@@ -22,6 +22,7 @@ module BlocRecord
       end
     end
 
+    #converts [:this] into ["this"]
     def convert_keys(options)
       options.keys.each {|k| options[k.to_s] = options.delete(k) if k.kind_of?(Symbol)}
       options

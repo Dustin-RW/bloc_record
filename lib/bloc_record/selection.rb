@@ -41,12 +41,18 @@ module Selection
   # Find every record
   # for each record, transform it to a Model
   # yield each model individually
-  def find_each(options = {})
+  def find_each(*options = {})
 
-    items = connection.execute <<-SQL
-      SELECT #{columns.join ","} FROM #{table}
-      LIMIT #{options.size} OFFSET #{options.start};
-    SQL
+    if options.nil?
+      items = connection.execute <<-SQL
+        SELECT #{columns.join ","} FROM #{table}
+      SQL
+    else
+      items = connection.execute <<-SQL
+        SELECT #{columns.join ","} FROM #{table}
+        LIMIT #{options.size} OFFSET #{options.start};
+      SQL
+    end
 
     items.each do |item|
       yield init_object_from_row(item)
@@ -64,11 +70,14 @@ module Selection
       LIMIT #{options.size} OFFSET #{options.start};
     SQL
 
-    rows_to_array(items)
+    #check if items are nil.  If not, yield rows as an entire batch
+    if items.nil?
+      nil
+    else
+      yield rows_to_array(items)
+    end
 
   end
-
-  # find_each("dog", "cat", "fish", options = {start: 4000, size: 300}})
 
   # method conditional for any 'find_by' method past.  Conditionals should be met with those in SQL table, otherwise
   def method_missing(method, *args)
@@ -169,13 +178,13 @@ module Selection
     else
       case args.first
       #handle String input
-    when String
-        expression = args.first
+      when String
+          expression = args.first
       #handle Hash input
-    when Hash
-        expression_hash = BlocRecord::Utility.convert_keys(args.first)
-        expression = expression_hash.map { |key, value| "#{key} = #{BlocRecord::Utility.sql_strings(value)}"}.join("and")
-      end
+      when Hash
+          expression_hash = BlocRecord::Utility.convert_keys(args.first)
+          expression = expression_hash.map { |key, value| "#{key} = #{BlocRecord::Utility.sql_strings(value)}"}.join("and")
+        end
     end
 
     sql = <<-SQL
