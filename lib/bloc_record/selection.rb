@@ -179,12 +179,12 @@ module Selection
       case args.first
       #handle String input
       when String
-          expression = args.first
+        expression = args.first
       #handle Hash input
       when Hash
-          expression_hash = BlocRecord::Utility.convert_keys(args.first)
-          expression = expression_hash.map { |key, value| "#{key} = #{BlocRecord::Utility.sql_strings(value)}"}.join("and")
-        end
+        expression_hash = BlocRecord::Utility.convert_keys(args.first)
+        expression = expression_hash.map { |key, value| "#{key} = #{BlocRecord::Utility.sql_strings(value)}"}.join("and")
+      end
     end
 
     sql = <<-SQL
@@ -198,18 +198,31 @@ module Selection
 
 
   def order(*args)
-    if args.count > 1
-      order = args.join(",")
-    else
-      order = args.first.to_s
+    orders = []
+
+    if args
+      #assend_descent verifys ASC or DESC, otherwise applies defaults ASC (see private methods)
+      args.each do |arg|
+        if arg.kind_of? String
+          orders << assend_descend(arg)
+        elsif arg.kind_of? Symbol
+          orders << assend_descend(arg.to_s)
+        elsif arg.kind_of? Hash
+          orders << assend_descend(arg.map{|k,v| "#{k} #{v}"}.join(''))
+        end
+      end
+    end
+
+    orders.join(',')
+
     end
 
     rows = connection.execute <<-SQL
       SELECT * FROM #{table}
-      ORDER BY #{order};
+      ORDER BY #{orders};
     SQL
 
-    rows_to_array(row)
+    rows_to_array(rows)
   end
 
   def join(*args)
@@ -224,10 +237,10 @@ module Selection
           SELECT * FROM #{table} #{BlocRecord::Utility.sql_strings(args.first)};
         SQL
       when Symbol
-      rows = connection.execute <<-SQL
-        SELECT * FROM #{table}
-        INNER JOIN #{args.first} ON #{args.first}.#{table}_id = #{table}.id
-      SQL
+        rows = connection.execute <<-SQL
+          SELECT * FROM #{table}
+          INNER JOIN #{args.first} ON #{args.first}.#{table}_id = #{table}.id
+        SQL
     end
 
     rows_to_array(rows)
@@ -245,6 +258,15 @@ module Selection
   # Wraps each row in a record object
   def rows_to_array(rows)
     rows.map { |row| new(Hash[columns.zip(row)]) }
+  end
+
+  #string provided includes a ASC or DESC.  If not, provided default ASC for SQL
+  def assend_descend(string)
+    if string.include?(" asc") || string.include?(" ASC") || string.include?(" desc") || string.include?(" DESC")
+      string
+    else
+      string << " ASC"
+    end
   end
 
 end
