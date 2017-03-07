@@ -94,7 +94,6 @@ module Selection
       attribute.slice!(0) if attribute[0] == "_"
 
       if self.attributes.include?(attribute)
-        puts "im here here"
         args.each do |arg|
           if arg.class == String
             value = arg
@@ -105,7 +104,26 @@ module Selection
 
         find_by(attribute, value)
       else
-        # return back to normal method_missing
+        super
+      end
+
+    elsif method.to_s[0...5] == "update"
+      attribute = nil
+      value = nil
+      attribute = method.to_s[7...method.length].downcase
+      attribute.slice!(0) if attribute[0] == "_"
+
+      if self.attributes.include?(attribute)
+        args.each do |arg|
+          if arg.class == String
+            value = arg
+          else
+            value = arg.to_s
+          end
+        end
+
+        self.update_attribute(attribute, value)
+      else
         super
       end
 
