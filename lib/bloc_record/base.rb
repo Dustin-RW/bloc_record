@@ -11,7 +11,6 @@ module BlocRecord
     extend Selection
     extend Schema
     extend Connection
-    extend Collection
 
 
     def initialize(options={})

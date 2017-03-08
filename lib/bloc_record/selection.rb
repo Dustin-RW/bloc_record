@@ -41,7 +41,7 @@ module Selection
   # Find every record
   # for each record, transform it to a Model
   # yield each model individually
-  def find_each(*options = {})
+  def find_each(*options)
 
     if options.nil?
       items = connection.execute <<-SQL
@@ -94,7 +94,6 @@ module Selection
       attribute.slice!(0) if attribute[0] == "_"
 
       if self.attributes.include?(attribute)
-        puts "im here here"
         args.each do |arg|
           if arg.class == String
             value = arg
@@ -105,7 +104,26 @@ module Selection
 
         find_by(attribute, value)
       else
-        # return back to normal method_missing
+        super
+      end
+
+    elsif method.to_s[0...5] == "update"
+      attribute = nil
+      value = nil
+      attribute = method.to_s[7...method.length].downcase
+      attribute.slice!(0) if attribute[0] == "_"
+
+      if self.attributes.include?(attribute)
+        args.each do |arg|
+          if arg.class == String
+            value = arg
+          else
+            value = arg.to_s
+          end
+        end
+
+        self.update_attribute(attribute, value)
+      else
         super
       end
 
@@ -215,7 +233,6 @@ module Selection
 
     orders.join(',')
 
-    end
 
     rows = connection.execute <<-SQL
       SELECT * FROM #{table}
@@ -233,24 +250,23 @@ module Selection
       SQL
     else
       case args.first
-        when String
-          rows = connection.execute <<-SQL
-            SELECT * FROM #{table} #{BlocRecord::Utility.sql_strings(args.first)};
-          SQL
-        when Symbol
-          rows = connection.execute <<-SQL
-            SELECT * FROM #{table}
-            INNER JOIN #{args.first} ON #{args.first}.#{table}_id = #{table}.id;
-          SQL
-        when Hash
-          key = args.first.keys[0]
-          value = args.first.values[0]
-          rows = connection.execute <<-SQL
-            SELECT * FROM #{table}
-            INNER JOIN #{key} ON #{key}.#{table}_id = #{table}.id
-            INNER JOIN #{value} ON #{value}.#{key}_id = #{key}.id
-          SQL
-        end
+      when String
+        rows = connection.execute <<-SQL
+          SELECT * FROM #{table} #{BlocRecord::Utility.sql_strings(args.first)};
+        SQL
+      when Symbol
+        rows = connection.execute <<-SQL
+          SELECT * FROM #{table}
+          INNER JOIN #{args.first} ON #{args.first}.#{table}_id = #{table}.id;
+        SQL
+      when Hash
+        key = args.first.keys[0]
+        value = args.first.values[0]
+        rows = connection.execute <<-SQL
+          SELECT * FROM #{table}
+          INNER JOIN #{key} ON #{key}.#{table}_id = #{table}.id
+          INNER JOIN #{value} ON #{value}.#{key}_id = #{key}.id
+        SQL
       end
     end
 
@@ -281,5 +297,4 @@ module Selection
       string << " ASC"
     end
   end
-
 end
