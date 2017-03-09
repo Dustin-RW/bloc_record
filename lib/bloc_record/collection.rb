@@ -72,7 +72,19 @@ module BlocRecord
           rows_to_array(rows)
         end
       end
+
+      def destroy_all
+        ids = self.map(&:id)
+
+        # self.first => entry 1
+        # entry 1.class=> Entry
+        # empties from DB
+        self.any? ? self.first.class.destroy(ids) : false
+        # deletes from collection object
+        self.clear
+      end
     end
+
 
   end
 end
