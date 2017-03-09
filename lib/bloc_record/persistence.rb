@@ -49,17 +49,17 @@ module Persistence
     def destroy(*id)
       # WHERE id IN (1, 3, 5, and so on)
       if id.length > 1
-        where_clause = "WHERE id IN (#{id.join(",")});"
+        where_clause = "WHERE id IN (#{id.join(",")})"
       else
-        where_clause = "WHERE id in #{id.first}"
+        where_clause = "WHERE id in (#{id.first})"
       end
 
       connection.execute <<-SQL
         DELETE FROM #{table}
-        WHERE id = #{id};
+        #{where_clause};
       SQL
 
-      true
+      true # tells me if method worked or not
     end
 
     def create(attrs)
@@ -107,11 +107,18 @@ module Persistence
       true
     end
 
-    def destroy_all(conditions_hash=nil)
-      if conditions_hash && !conditions_hash.empty?
+    def destroy_all(arg)
+
+      if arg.class == Array
+        conditions.join('=')
+      elsif arg.class == String
+        conditions = arg.to_s
+      elsif arg.class == Hash
         conditions_hash = BlocRecord::Utility.convert_keys(condition_hash)
         conditions = conditions_hash.map { |key,value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}"}.join(" and ")
+      end
 
+      if conditions
         connection.execute <<-SQL
           DELETE FROM #{table}
           WHERE #{conditions};
