@@ -11,4 +11,6 @@ Gem::Specification.new do |s|
   s.homepage = "https://rubygems.org/gems/bloc_record"
   s.license = 'MIT'
   s.add_runtime_dependency 'sqlite3', '~> 1.3'
+  s.add_runtime_dependency 'pg', '~> 0.20.0'
+  s.add_runtime_dependency 'activesupport'
 end
