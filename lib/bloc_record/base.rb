@@ -1,10 +1,10 @@
+require_relative 'associations'
 require 'bloc_record/utility'
 require 'bloc_record/schema'
 require 'bloc_record/persistence'
 require 'bloc_record/selection'
 require 'bloc_record/connection'
 require 'bloc_record/collection'
-require 'bloc_record/associations'
 
 module BlocRecord
   class Base
