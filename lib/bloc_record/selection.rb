@@ -2,7 +2,6 @@ require 'sqlite3'
 
 module Selection
   def find(*ids)
-    puts "WHRE AM I"
     if ids.kind_of? String || ids <= 0
       puts "must enter a postive number"
     elsif ids.length == 1
@@ -18,7 +17,6 @@ module Selection
   end
 
   def find_one(id)
-    puts "I AM HERE"
 
     if id.kind_of? String || id <= 0
       puts "must enter a postive number"
@@ -28,9 +26,7 @@ module Selection
         WHERE id = #{id};
       SQL
 
-      puts sql
-
-      row = connection.execute sql
+      row = connection.get_first_row sql
 
       init_object_from_row(row)
     end
